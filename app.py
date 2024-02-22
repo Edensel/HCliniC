@@ -1,9 +1,12 @@
 import argparse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Clinic, Manager, Staff, Shift, Patient, employee_shift_association
+from models import Base, Clinic, Manager, Staff, Shift, Patient, Appointment, EmployeeShiftAssociation, Doctor
 
-# Create engine and bind to existing database
+# Rest of your code
+
+
+# Create engine and bind to the existing database
 engine = create_engine('sqlite:///clinical.db')
 Base.metadata.bind = engine
 
@@ -14,37 +17,64 @@ session = DBSession()
 def add_patient(args):
     name = input("Enter patient's name: ")
     gender = input("Enter patient's gender: ")
-    age = int(input("Enter patient's age: "))
+    year_of_birth = int(input("Enter patient's year of birth: "))
     email = input("Enter patient's email: ")
-    phone = input("Enter patient's phone number: ")
-    address = input("Enter patient's address: ")
+    phone_number = input("Enter patient's phone number: ")
 
-    new_patient = Patient(name=name, gender=gender, age=age, email=email, phone=phone, address=address)
+    new_patient = Patient(
+        first_name=name,
+        gender=gender,
+        year_of_birth=year_of_birth,
+        email=email,
+        phone_number=phone_number
+    )
     session.add(new_patient)
     session.commit()
     print("Patient added successfully.")
 
 def add_doctor(args):
     name = input("Enter doctor's name: ")
-    specialization = input("Enter doctor's specialization: ")
+    gender = input("Enter doctor's gender: ")
     email = input("Enter doctor's email: ")
-    phone = input("Enter doctor's phone number: ")
+    job_title = input("Enter doctor's job title: ")
 
-    new_doctor = Doctor(name=name, specialization=specialization, email=email, phone=phone)
+    new_doctor = Doctor(
+        first_name=name,
+        gender=gender,
+        email=email,
+        job_title=job_title
+    )
     session.add(new_doctor)
     session.commit()
     print("Doctor added successfully.")
 
+def add_clinic(args):
+    name = input("Enter clinic name: ")
+    location = input("Enter clinic location: ")
+
+    new_clinic = Clinic(name=name, location=location)
+    session.add(new_clinic)
+    session.commit()
+    print("Clinic added successfully.")
+
 def add_appointment(args):
-    patient_id = input("Enter patient ID: ")
-    doctor_id = input("Enter doctor ID: ")
+    patient_id = int(input("Enter patient ID: "))
+    doctor_id = int(input("Enter doctor ID: "))
     date = input("Enter appointment date (YYYY-MM-DD): ")
     time = input("Enter appointment time (HH:MM AM/PM): ")
+    patient_name = input("Enter patient name: ")
+    phone_number = input("Enter patient phone number: ")
 
-    new_appointment = Appointment(patient_id=patient_id, doctor_id=doctor_id, date=date, time=time)
+    new_appointment = Appointment(
+        patient_id=patient_id,
+        doctor_id=doctor_id,
+        date=date,
+        time=time,
+        patient_name=patient_name,
+        phone_number=phone_number
+    )
     session.add(new_appointment)
     session.commit()
-    print("Appointment added successfully.")
 
 def delete_entity(args):
     entity_type = input("Enter entity type to delete (patient, doctor, appointment): ")
@@ -58,7 +88,7 @@ def delete_entity(args):
         print("Invalid entity type.")
 
 def delete_patient():
-    patient_id = input("Enter patient ID to delete: ")
+    patient_id = int(input("Enter patient ID to delete: "))
     patient = session.query(Patient).filter_by(id=patient_id).first()
     if patient:
         session.delete(patient)
@@ -68,7 +98,7 @@ def delete_patient():
         print("Patient not found.")
 
 def delete_doctor():
-    doctor_id = input("Enter doctor ID to delete: ")
+    doctor_id = int(input("Enter doctor ID to delete: "))
     doctor = session.query(Doctor).filter_by(id=doctor_id).first()
     if doctor:
         session.delete(doctor)
@@ -78,8 +108,8 @@ def delete_doctor():
         print("Doctor not found.")
 
 def delete_appointment():
-    appointment_id = input("Enter appointment ID to delete: ")
-    appointment = session.query(Appointment).filter_by(id=appointment_id).first()
+    appointment_id = int(input("Enter appointment ID to delete: "))
+    appointment = session.query(Shift).filter_by(id=appointment_id).first()
     if appointment:
         session.delete(appointment)
         session.commit()
@@ -93,14 +123,29 @@ def list_patients(args):
     for patient in patients:
         patient_data.append({
             "id": patient.id,
-            "name": patient.name,
+            "first_name": patient.first_name,
+            "last_name": patient.last_name,
             "gender": patient.gender,
-            "age": patient.age,
+            "year_of_birth": patient.year_of_birth,
             "email": patient.email,
-            "phone": patient.phone,
-            "address": patient.address
+            "phone_number": patient.phone_number
         })
-    return patient_data
+    print("\nList of Patients:")
+    print(patient_data)
+    input("Press Enter to continue...")
+
+def list_clinics(args):
+    clinics = session.query(Clinic).all()
+    clinic_data = []
+    for clinic in clinics:
+        clinic_data.append({
+            "id": clinic.id,
+            "name": clinic.name,
+            "location": clinic.location,
+        })
+    print("\nList of Clinics:")
+    print(clinic_data)
+    input("Press Enter to continue...")
 
 def list_doctors(args):
     doctors = session.query(Doctor).all()
@@ -108,15 +153,18 @@ def list_doctors(args):
     for doctor in doctors:
         doctor_data.append({
             "id": doctor.id,
-            "name": doctor.name,
-            "specialization": doctor.specialization,
+            "first_name": doctor.first_name,
+            "last_name": doctor.last_name,
+            "gender": doctor.gender,
             "email": doctor.email,
-            "phone": doctor.phone
+            "job_title": doctor.job_title
         })
-    return doctor_data
+    print("\nList of Doctors:")
+    print(doctor_data)
+    input("Press Enter to continue...")
 
 def list_appointments(args):
-    appointments = session.query(Appointment).all()
+    appointments = session.query(Shift).all()
     appointment_data = []
     for appointment in appointments:
         appointment_data.append({
@@ -126,7 +174,9 @@ def list_appointments(args):
             "date": appointment.date,
             "time": appointment.time
         })
-    return appointment_data
+    print("\nList of Appointments:")
+    print(appointment_data)
+    input("Press Enter to continue...")
 
 def main():
     parser = argparse.ArgumentParser(description="Clinic Management System")
@@ -157,15 +207,20 @@ def main():
     list_appointments_parser = subparsers.add_parser("list_appointments", help="List all appointments")
     list_appointments_parser.set_defaults(func=list_appointments)
 
+    add_clinic_parser = subparsers.add_parser("add_clinic", help="Add a clinic")
+    add_clinic_parser.set_defaults(func=add_clinic)
+
     while True:
         print("\nMenu:")
         print("1. Add Patient")
         print("2. Add Doctor")
         print("3. Add Appointment")
-        print("4. List Patients")
-        print("5. List Doctors")
-        print("6. List Appointments")
-        print("7. Delete Entity")
+        print("4. Add Clinic")
+        print("5. List Patients")
+        print("6. List Doctors")
+        print("7. List Appointments")
+        print("8. List Clinics")
+        print("9. Delete Entity")
         print("0. Exit")
         
         choice = input("Enter your choice: ")
@@ -177,21 +232,28 @@ def main():
         elif choice == "3":
             add_appointment(None)
         elif choice == "4":
+            add_clinic(None)
+        elif choice == "5":
             patients = list_patients(None)
             for patient in patients:
-                print(patient)
-            input("Press Enter to continue...")
-        elif choice == "5":
-            doctors = list_doctors(None)
-            for doctor in doctors:
-                print(doctor)
+                print("\nList of Patients:")
             input("Press Enter to continue...")
         elif choice == "6":
-            appointments = list_appointments(None)
-            for appointment in appointments:
-                print(appointment)
+            doctors = list_doctors(None)
+            for doctor in doctors:
+                print("\nList of Doctors:")
             input("Press Enter to continue...")
         elif choice == "7":
+            appointments = list_appointments(None)
+            for appointment in appointments:
+                print("\nList of Appointments:")
+            input("Press Enter to continue...")
+        elif choice == "8":
+            clinics = list_clinics(None)
+            for clinic in clinics:
+                print("\nList of Clinics:")
+            input("Press Enter to continue...")
+        elif choice == "9":
             delete_entity(None)
         elif choice == "0":
             break
